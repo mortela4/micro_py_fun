@@ -7,7 +7,8 @@ Converted to uPy-libraries or custom code (where necessary) for uPy-platform.
 
 # from gpiozero import SPIDevice, SourceMixin
 from machine import SPI                             # NOTE: we do NOT need any ChipSelect-pin, so no need to import 'Pin' class!!
-#from colorzero import Color, Hue
+
+from colorzero import Color, Hue                    # See: https://github.com/waveform80/colorzero
 
 from statistics import mean                         # NOT part of uPy std.lib!! See: https://github.com/rcolistete/MicroPython_Statistics
 from time import sleep                              # 'time' is part of uPy std.lib
@@ -17,10 +18,11 @@ class Pixel:
     """ Strictly speaking a dataclass - modeling a single RGB-LED device. """
     def __init__(self, index):
         self.index = index          # Represents its number in the LED-string --> idx=0 is first(i.e. closest to SPI-host) in string.
-
+        self.value = 0, 0, 0        # 'value' is actually color.
+    
     @property
     def value(self):
-        return self.value           # Return color(=RGB) value and brightness(=intensity).
+        return self.value           # Return color(=RGB) value.
 
     @value.setter
     def value(self, value):
@@ -28,13 +30,13 @@ class Pixel:
 
     @property
     def color(self):
-        r, g, b, brightness = self.value
+        r, g, b = self.value
         # return Color(*self.value)
         return r, g, b
 
     @color.setter
     def color(self, c):
-        r, g, b = c
+        r, g, b = c             # TODO: assess - is this really necessary??
         self.value = (r, g, b)
 
     def on(self):
@@ -45,7 +47,7 @@ class Pixel:
 
 
 class RGBXmasTree():
-    def __init__(self, spi_num=0, pixels=25, brightness=0.5, *args, **kwargs):
+    def __init__(self, spi_num=0, pixels=25, brightness=0.5):
         # Set up SPI device w. 1MHz clock frequency:
         self._spi_dev = SPI(spi_num, baudrate=1000000)
         # 
@@ -60,12 +62,12 @@ class RGBXmasTree():
         average_r = mean(pixel.color[0] for pixel in self)
         average_g = mean(pixel.color[1] for pixel in self)
         average_b = mean(pixel.color[2] for pixel in self)
-        return Color(average_r, average_g, average_b)
+        return Color(average_r, average_g, average_b)           # TODO: re-implement!
 
     @color.setter
     def color(self, c, idx):
         r, g, b = c
-        self.pixels[idx]. = ((r, g, b),)
+        self.pixels[idx].value = r, g, b
 
     @property
     def brightness(self):
@@ -81,7 +83,7 @@ class RGBXmasTree():
     def value(self):
         return self._value
 
-    @value.setter
+    @value.setter                   # TODO: redo this!
     def value(self, value):
         start_of_frame = [0]*4
         end_of_frame = [0]*5
