@@ -10,7 +10,9 @@ from machine import SPI                             # NOTE: we do NOT need any C
 
 from colorzero import Color, Hue                    # See: https://github.com/waveform80/colorzero
 
-from statistics import mean                         # NOT part of uPy std.lib!! See: https://github.com/rcolistete/MicroPython_Statistics
+#from statistics import mean                        # NOT part of uPy std.lib!! 
+from stat_funcs import mean                         # Replacement! See: https://github.com/rcolistete/MicroPython_Statistics
+
 from time import sleep                              # 'time' is part of uPy std.lib
 
 
