@@ -16,6 +16,13 @@ from stat_funcs import mean                         # Replacement! See: https://
 from time import sleep                              # 'time' is part of uPy std.lib
 
 
+# Constants:
+START_OF_FRAME = [0]*4      # A RGB-LED frame must START w. 32x SPI-clocks (SOUT='0')
+END_OF_FRAME = [0]*5        # A RGB-LED frame must END w. 40x SPI-clocks (SOUT='0')
+
+
+# Pixel-class is a RGB-LED representation:
+
 class Pixel:
     """ Strictly speaking a dataclass - modeling a single RGB-LED device. """
     def __init__(self, index):
@@ -51,11 +58,13 @@ class Pixel:
 class RGBXmasTree():
     def __init__(self, spi_num=0, pixels=25, brightness=0.5):
         # Set up SPI device w. 1MHz clock frequency:
-        self._spi_dev = SPI(spi_num, baudrate=1000000)
-        # 
+        SPI_DEV = f"SPI_{spi_num}"
+        self._spi_dev = SPI(spi_num) 
+        self._spi_dev.init(baudrate=1000000, polarity=0, phase=0, bits=8, firstbit=SPI.MSB)
+        # List of 'Pixel'-instances, representing the RGB-LEDs in the string:
         self.pixels = [Pixel(parent=self, index=i) for i in range(pixels)]
         # Initialize LEDs --> turn all OFF:
-        self._value = [(0, 0, 0)] * pixels
+        self._value = [(0, 0, 0)] * pixels      
         self.brightness = brightness            # Default brightness ...
         self.off()
 
@@ -85,18 +94,27 @@ class RGBXmasTree():
     def value(self):
         return self._value
 
-    @value.setter                   # TODO: redo this!
-    def value(self, value):
-        start_of_frame = [0]*4
-        end_of_frame = [0]*5
+    @value.setter                   
+    def value(self, index_and_color: tuple[int, int]):
+        """
+        SET-attribute for indexed pixel's COLOR-value.
+        I.e. 'index_and_color' argument is a tuple w. pixel's index(in LED-string) and its color(RGB)-value.
+
+        Args:
+            index_and_color (_type_): tuple w. index
+        """
+        # Split values fromtuple-arg:
+        pixel_idx, color_val = index_and_color
+        
+        
         # SSSBBBBB (first byte = <start=3MSBs><brightness=5LSBs>)
         brightness = 0b11100000 | self._brightness_bits
-        pixels = [[int(255*v) for v in p] for p in value]
-        pixels = [[brightness, b, g, r] for r, g, b in pixels]
-        pixels = [i for p in pixels for i in p]
-        data = start_of_frame + pixels + end_of_frame
-        self._spi_dev.write(data)
-        self._value = value
+        pixel_data = [[int(255*v) for v in p] for p in range(pixel_idx + 1)]
+        pixel_data = [[brightness, b, g, r] for r, g, b in self._value]
+        #pixels = [i for p in pixels for i in p]
+        rgb_led_data = START_OF_FRAME + pixel_data + END_OF_FRAME
+        self._spi_dev.write(rgb_led_data)
+        # self._value = value
 
     def on(self):
         self.value = ((1, 1, 1),) * len(self)
