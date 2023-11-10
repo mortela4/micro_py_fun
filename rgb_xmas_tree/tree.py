@@ -53,7 +53,7 @@ class RGBXmasTree():
         # Set up SPI device w. 1MHz clock frequency:
         self._spi_dev = SPI(spi_num, baudrate=1000000)
         # 
-        self._all = [Pixel(parent=self, index=i) for i in range(pixels)]
+        self.pixels = [Pixel(parent=self, index=i) for i in range(pixels)]
         # Initialize LEDs --> turn all OFF:
         self._value = [(0, 0, 0)] * pixels
         self.brightness = brightness            # Default brightness ...
@@ -89,7 +89,7 @@ class RGBXmasTree():
     def value(self, value):
         start_of_frame = [0]*4
         end_of_frame = [0]*5
-                     # SSSBBBBB (start, brightness)
+        # SSSBBBBB (first byte = <start=3MSBs><brightness=5LSBs>)
         brightness = 0b11100000 | self._brightness_bits
         pixels = [[int(255*v) for v in p] for p in value]
         pixels = [[brightness, b, g, r] for r, g, b in pixels]
