@@ -15,6 +15,9 @@ from stat_funcs import mean                         # Replacement! See: https://
 
 from time import sleep                              # 'time' is part of uPy std.lib
 
+# Local imports:
+from rgb_led import START_OF_FRAME, END_OF_FRAME
+
 
 # Pixel-class is a RGB-LED representation:
 
@@ -51,9 +54,14 @@ class Pixel:
 
 
 class RGBXmasTree():
+    """
+    Connect 4 signals from MCU platform to Xmas-tree as follows:
+    - SOUT to pin22 on xmastree header
+    - SCLK to pin32 on xmastree header
+    """
     def __init__(self, spi_num=0, pixels=25, brightness=0.5):
         # Set up SPI device w. 1MHz clock frequency:
-        SPI_DEV = f"SPI_{spi_num}"
+        SPI_DEV = f"SPI_{spi_num}"                          # Equivalent to GPIO12 = MOSI/SOUT and GPIO25 = SCLK on RPi GPIO-header.
         self._spi_dev = SPI(spi_num) 
         self._spi_dev.init(baudrate=1000000, polarity=0, phase=0, bits=8, firstbit=SPI.MSB)
         # List of 'Pixel'-instances, representing the RGB-LEDs in the string:
@@ -90,7 +98,7 @@ class RGBXmasTree():
         return self._value
 
     @value.setter                   
-    def value(self, index_and_color: tuple[int, int]):
+    def value(self, value):
         """
         SET-attribute for indexed pixel's COLOR-value.
         I.e. 'index_and_color' argument is a tuple w. pixel's index(in LED-string) and its color(RGB)-value.
@@ -108,7 +116,7 @@ class RGBXmasTree():
         pixel_data = [[brightness, b, g, r] for r, g, b in self._value]
         #pixels = [i for p in pixels for i in p]
         rgb_led_data = START_OF_FRAME + pixel_data + END_OF_FRAME
-        self._spi_dev.write(rgb_led_data)
+        self._spi_dev.write(bytes[rgb_led_data])                    # NOTE: need to convert into 
         # self._value = value
 
     def on(self):
@@ -126,3 +134,8 @@ if __name__ == '__main__':
     tree = RGBXmasTree()
     
     tree.on()                   # All RGB-LEDs = 'ON' w. pattern=0xFFFFFF(FF)='white' (at full intensity).
+    sleep(5)
+    tree.off()
+    sleep(3)
+    tree.on()
+
