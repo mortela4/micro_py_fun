@@ -19,12 +19,13 @@ if __name__ == "__main__":
     spi = SPI("SPI_0")
     spi.init(baudrate=400000, polarity=0, phase=0, bits=8, firstbit=SPI.MSB)
     #
-    intensity = 0x0f
-    rgb_val = [0x1f]*3
+    intensity = [0x0f]
+    rgb_val = [0, 0x6f, 0]
     led_data = intensity + rgb_val 
     #
     test_data = START_OF_FRAME + led_data + END_OF_FRAME
     # Light the 1.st LED in string:
+    print("Testing single LED ...")
     for txb in test_data:
         spi.write(bytes([txb]))
     #
@@ -34,8 +35,10 @@ if __name__ == "__main__":
     #
     test_data = START_OF_FRAME + multi_led_data + END_OF_FRAME
     # Light ALL the LEDs in string:
-    for txb in test_data:
-        spi.write(bytes([txb]))
+    print("Testing ALL 25 of the LEDs in string ...")
+    spi.write(bytes(test_data))
+    #for txb in test_data:
+    #    spi.write(bytes([txb]))
     #  
     print("Done ...")
 
